@@ -208,3 +208,14 @@ __marimo__/
 /data/UIT_HWDB_line
 /data/UIT_HWDB_paragraph
 /data/UIT_HWDB_word
+data/UIT_HWDB_word.zip
+*.toc
+*.gz
+*.xml
+*.fls
+*.fdb_latexmk
+*.aux
+*.bbl
+*.bcf
+*.bcf-SAVE-ERROR
+*.blg
