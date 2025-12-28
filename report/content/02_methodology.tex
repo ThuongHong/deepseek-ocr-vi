@@ -1,0 +1,150 @@
+\section{Phương pháp}
+
+\subsection{Bộ dữ liệu: UIT-HWDB-word}
+
+\subsubsection{Tổng quan bộ dữ liệu}
+Ta sử dụng bộ dữ liệu UIT-HWDB-word, một phần của bộ dữ liệu chữ viết tay tiếng Việt UIT-HWDB (\cite{DBLP:conf/rivf/NguyenVN22}).
+
+Một số mẫu chữ viết tay từ bộ dữ liệu được minh họa trong Hình~\ref{fig:uit_hwdb_samples}.
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/ex_train.png}
+        \caption{(a) Tập huấn luyện}
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/ex_test.png}
+        \caption{(b) Tập kiểm thử}
+    \end{minipage}
+    \caption{Một số mẫu chữ viết tay từ bộ dữ liệu UIT-HWDB-word}
+    \label{fig:uit_hwdb_samples}
+\end{figure}
+
+
+\subsubsection{Cấu trúc dữ liệu}
+Bộ dữ liệu được tổ chức thành hai tập chính: tập huấn luyện (train) và tập kiểm tra (test). Cấu trúc thư mục như sau:
+\begin{verbatim}
+UIT_HWDB_word/
+    train_data/
+        1/
+            image_001.png
+            ...
+            label.json
+        ...
+    test_data/
+        250/
+            ...
+            label.json
+        ...
+\end{verbatim}
+
+Mỗi thư mục con chứa các ảnh chữ viết tay và một file \texttt{label.json} chứa nhãn tương ứng cho từng ảnh. Định dạng của file nhãn như sau:
+\begin{verbatim}
+{
+    "1.jpg": "xin chào",
+    "2.jpg": "cảm ơn",
+    ...
+}
+\end{verbatim}
+
+\subsection{Phân tích dữ liệu (Exploratory Data Analysis)}
+Quá trình phân tích khám phá dữ liệu (EDA) được thực hiện chi tiết trên tập huấn luyện (107,607 mẫu) và tập kiểm tra (2,881 mẫu) nhằm định hướng cho các quyết định tiền xử lý và cấu hình mô hình.
+
+\subsubsection{Đặc điểm hình ảnh}
+Phân tích thống kê kích thước ảnh cho thấy những đặc trưng quan trọng:
+\begin{itemize}
+    \item Chiều rộng cố định: Tất cả các ảnh trong bộ dữ liệu đều có chiều rộng 128 pixels.
+    \item Chiều cao biến thiên: Chiều cao ảnh có sự dao động lớn, từ 23 pixels đến 974 pixels, với giá trị trung bình khoảng 98 pixels và trung vị là 93 pixels.
+    \item Điểm ngoại lai (Outliers): Mặc dù phần lớn ảnh có chiều cao dưới 128 pixels, sự tồn tại của các ảnh có chiều cao lên tới gần 1000 pixels cho thấy có những mẫu chữ viết tay rất dài hoặc được viết theo chiều dọc.
+\end{itemize}
+Từ kết quả này, việc lựa chọn kích thước ảnh đầu vào cho mô hình là 384x384 được đánh giá là tối ưu. Kích thước này đủ lớn để chứa trọn vẹn đa số các ảnh (với chiều cao trung bình $\sim$98px) mà không cần co giãn quá nhiều, đồng thời hạn chế lãng phí tài nguyên tính toán cho phần padding của các ảnh nhỏ.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{img/img_size.png}
+    \caption{Phân bố kích thước ảnh trong bộ dữ liệu UIT-HWDB-word}
+    \label{fig:img_size}
+\end{figure}
+
+\subsubsection{Phân bố nhãn}
+\begin{itemize}
+    \item Phân phối Long-tail: Tần suất xuất hiện của các nhãn từ tuân theo quy luật phân phối đuôi dài. Một lượng nhỏ các từ thông dụng chiếm tỷ trọng lớn trong tập dữ liệu, trong khi có những từ chỉ xuất hiện rất ít lần.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{img/label_dist.png}
+    \caption{Phân bố nhãn}
+    \label{fig:label_dist}
+\end{figure}
+
+\subsection{Tiền xử lý dữ liệu (Data Preprocessing)}
+
+\subsubsection{Chuẩn bị dữ liệu}
+Quá trình chuẩn bị dữ liệu bao gồm việc đọc các file \texttt{label.json} từ các thư mục con, tải ảnh sử dụng thư viện PIL và chuyển đổi sang định dạng RGB.
+
+\subsubsection{Định dạng hội thoại (Conversation Format)}
+Để fine-tune mô hình DeepSeek-OCR (một mô hình Vision-Language Model), dữ liệu được chuyển đổi sang định dạng hội thoại chuẩn:
+\begin{verbatim}
+{
+    "messages": [
+        {
+            "role": "<|User|>",
+            "content": "<image>\nFree OCR.",
+            "images": [<PIL.Image>]
+        },
+        {
+            "role": "<|Assistant|>",
+            "content": "nhãn_của_ảnh"
+        }
+    ]
+}
+\end{verbatim}
+Trong đó, token \texttt{<image>} đại diện cho vị trí chèn các embedding của ảnh, và câu lệnh "Free OCR." đóng vai trò là prompt hướng dẫn mô hình thực hiện tác vụ nhận dạng ký tự quang học.
+
+\subsubsection{Xử lý ảnh (Image Processing)}
+Trong quá trình huấn luyện, ảnh đầu vào được xử lý thông qua \texttt{DeepSeekOCRDataCollator} với các tham số cấu hình như sau:
+\begin{itemize}
+    \item \textbf{Kích thước ảnh (Image Size):} 384x384 pixels. Tham số này được lựa chọn dựa trên kết quả EDA cho thấy phần lớn ảnh trong bộ dữ liệu có kích thước nhỏ, do đó kích thước 384x384 là đủ để bao quát chi tiết ảnh mà không gây lãng phí tài nguyên tính toán.
+    \item \textbf{Chế độ cắt (Crop Mode):} Tắt (\texttt{False}). Do kích thước ảnh gốc chủ yếu là nhỏ và phù hợp với kích thước đầu vào (384x384), việc sử dụng cơ chế dynamic cropping (thường dùng cho ảnh độ phân giải cao) là không cần thiết. Việc tắt chế độ này giúp đơn giản hóa quá trình xử lý và tối ưu hóa tốc độ huấn luyện.
+    \item \textbf{Chuẩn hóa (Normalization):} Mean = (0.5, 0.5, 0.5), Std = (0.5, 0.5, 0.5).
+\end{itemize}
+Lưu ý rằng trong quá trình suy diễn (inference), kích thước ảnh và chế độ crop có thể được điều chỉnh (ví dụ: 1024x1024 và bật crop mode) để đạt độ chính xác cao hơn.
+
+\subsection{Kiến trúc mô hình và Fine-tuning}
+
+\subsubsection{Mô hình cơ sở}
+Dự án sử dụng mô hình \textbf{DeepSeek-OCR}, được tải và tối ưu hóa thông qua thư viện \textbf{Unsloth} (\texttt{FastVisionModel}). Unsloth giúp tăng tốc độ huấn luyện và giảm bộ nhớ tiêu thụ thông qua các kỹ thuật tối ưu hóa kernel và lượng tử hóa.
+
+\subsubsection{Chiến lược Fine-tuning: LoRA}
+Để tinh chỉnh mô hình trên tập dữ liệu tiếng Việt với tài nguyên hạn chế, kỹ thuật \textbf{LoRA (Low-Rank Adaptation)} được áp dụng. Cấu hình LoRA cụ thể như sau:
+\begin{itemize}
+    \item \textbf{Rank (r):} 16
+    \item \textbf{Alpha:} 16
+    \item \textbf{Dropout:} 0
+    \item \textbf{Target Modules:} Áp dụng lên tất cả các lớp linear projection trong mô hình attention: \texttt{q\_proj, k\_proj, v\_proj, o\_proj, gate\_proj, up\_proj, down\_proj}.
+\end{itemize}
+
+\subsubsection{Tham số huấn luyện (Hyperparameters)}
+Quá trình huấn luyện được thực hiện với các tham số chính:
+\begin{itemize}
+    \item \textbf{Số epochs:} 2
+    \item \textbf{Batch size:} 32 (per device)
+    \item \textbf{Gradient Accumulation Steps:} 2
+    \item \textbf{Learning Rate:} 1e-4
+    \item \textbf{Optimizer:} AdamW 8-bit (giúp tiết kiệm bộ nhớ VRAM)
+    \item \textbf{Scheduler:} Linear decay với 5 bước warmup
+    \item \textbf{Độ chính xác:} BF16 (nếu phần cứng hỗ trợ) hoặc FP16
+\end{itemize}
+
+\subsection{Độ đo đánh giá (Evaluation Metrics)}
+Mô hình được đánh giá dựa trên các độ đo phổ biến trong bài toán OCR:
+\begin{itemize}
+    \item \textbf{CER (Character Error Rate):} Tỷ lệ lỗi ký tự, đo lường khoảng cách chỉnh sửa (Levenshtein distance) giữa chuỗi dự đoán và nhãn thực tế, chuẩn hóa theo độ dài nhãn.
+    \item \textbf{Accuracy:} Được tính toán dựa trên CER (1 - CER) hoặc tỷ lệ khớp chính xác (Exact Match) tùy ngữ cảnh phân tích.
+    \item \textbf{Exact Match:} Tỷ lệ số mẫu dự đoán hoàn toàn chính xác so với nhãn gốc.
+\end{itemize}
+
