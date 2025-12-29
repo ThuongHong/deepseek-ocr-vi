@@ -1,7 +1,14 @@
 \section{Kết quả}
 \subsection{Quá trình huấn luyện}
-Training loss trong quá trình fine-tuning được thể hiện trong hình \ref{fig:train_loss}.
+Quá trình fine-tuning kéo dài gần 6 giờ. Lượng tài nguyên sử dụng trong quá trình huấn luyện được tóm tắt như sau:
+\begin{itemize}
+    \item Thời gian: 355.23 phút
+    \item Bộ nhớ đỉnh: 13.66 GB (92.667\%)
+    \item Bộ nhớ cho LoRA: 6.93 GB (47.012\%)
+\end{itemize}
+Việc tinh chỉnh tham số huấn luyện đã giúp tận dụng tối đa tài nguyên trên Kaggle.
 
+Training loss trong quá trình fine-tuning được thể hiện trong hình \ref{fig:train_loss}.
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{img/train_loss.png}
