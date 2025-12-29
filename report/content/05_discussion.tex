@@ -1,0 +1,11 @@
+\section{Thảo luận}
+
+\subsection{Đánh giá hiệu quả}
+Kết quả thực nghiệm cho thấy kỹ thuật Fine-tuning (sử dụng LoRA) đã mang lại hiệu quả vượt trội so với mô hình gốc (Zero-shot).
+\begin{itemize}
+    \item Cải thiện độ chính xác: Chỉ số CER giảm mạnh từ 2.2673 xuống 0.1075, tương ứng với mức giảm lỗi hơn 95\%. Điều này chứng tỏ mô hình đã học thành công các đặc trưng hình thái phức tạp của chữ viết tay tiếng Việt, đặc biệt là các dấu thanh và kiểu nét nối (ligatures) vốn là điểm yếu của mô hình gốc.
+    \item Hiệu quả của LoRA: Việc chỉ huấn luyện một lượng nhỏ tham số (adapters) nhưng đạt được độ chính xác cao (Accuracy $\sim$89.25\%) cho thấy DeepSeek-OCR có nền tảng tri thức thị giác rất tốt, chỉ cần tinh chỉnh nhẹ để thích nghi với miền dữ liệu mới.
+\end{itemize}
+
+\subsection{Hạn chế}
+Mặc dù mô hình fine-tuned đã đạt được kết quả ấn tượng, vẫn còn một số hạn chế đã được trình bày trong phần \ref{sec:hard_cases}. Hạn chế này là do sự nhập nhằng của chữ viết tay, một số mẫu chữ viết quá biến dạng khiến mô hình dự đoán sai. Đây là thách thức cố hữu của bài toán HTR (Handwritten Text Recognition) mà ngay cả mắt người cũng khó phân biệt nếu thiếu ngữ cảnh.

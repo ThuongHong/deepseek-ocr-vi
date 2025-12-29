@@ -1,4 +1,4 @@
-\section{Bối cảnh}
+\section{Giới thiệu}
 
 \subsection{Tổng quan về OCR và Thách thức với Tiếng Việt}
 Nhận dạng ký tự quang học (OCR - Optical Character Recognition) là công nghệ chuyển đổi hình ảnh chứa văn bản (tài liệu in, viết tay, ảnh chụp) thành định dạng văn bản máy tính có thể chỉnh sửa và tìm kiếm được.
@@ -12,7 +12,7 @@ Tuy nhiên, việc áp dụng OCR cho tiếng Việt gặp nhiều thách thức
 \end{itemize}
 
 \subsection{Tổng quan về mô hình DeepSeek-OCR}
-(\cite{wei2025deepseek}) DeepSeek-OCR là một mô hình Ngôn ngữ - Thị giác (Vision-Language Model - VLM) tiên tiến, được thiết kế theo hướng tiếp cận "nén ngữ cảnh quang học" (optical context compression). Thay vì chỉ nhận dạng ký tự đơn lẻ, mô hình xử lý toàn bộ hình ảnh tài liệu như một chuỗi token thị giác nén để giải mã ra văn bản.
+(\cite{wei2025deepseekocrcontextsopticalcompression}) DeepSeek-OCR là một mô hình Ngôn ngữ - Thị giác (Vision-Language Model - VLM) tiên tiến, được thiết kế theo hướng tiếp cận "nén ngữ cảnh quang học" (optical context compression). Thay vì chỉ nhận dạng ký tự đơn lẻ, mô hình xử lý toàn bộ hình ảnh tài liệu như một chuỗi token thị giác nén để giải mã ra văn bản.
 
 \subsubsection{Kiến trúc}
 Mô hình sử dụng kiến trúc End-to-End gồm hai thành phần chính nối tiếp nhau:

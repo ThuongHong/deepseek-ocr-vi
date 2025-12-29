@@ -1,0 +1,19 @@
+\section{Thực nghiệm}
+
+\subsection{Phân chia dữ liệu}
+Bộ dữ liệu UIT-HWDB-word đã được tác giả chia thành hai tập train/test riêng biệt. Ta sẽ không sử dụng tập validation mà thực hiện đánh giá trên tập test sau khi kết thúc quá trình huấn luyện.
+
+Trong quá trình huấn luyện, dữ liệu sẽ được xử lý bởi lớp \texttt{DeepSeekOCRDataCollator}, sau đó được chuyển cho \texttt{Trainer} để thực hiện quá trình huấn luyện.
+
+\subsection{Phương pháp thực nghiệm}
+Ta dùng tập test để đánh giá mô hình trước và sau khi huấn luyện:
+
+\begin{enumerate}
+    \item Baseline (Zero-shot): Mô hình DeepSeek-OCR gốc (pre-trained) chưa qua bất kỳ quá trình huấn luyện thêm nào.
+    \item Fine-tuned Model: Mô hình sau khi đã được huấn luyện với kỹ thuật LoRA trên tập dữ liệu UIT-HWDB-word.
+\end{enumerate}
+
+\subsection{Metrics}
+Sau khi huấn luyện, mô hình được đánh giá trên tập kiểm thử dựa trên CER. CER (Character Error Rate) là đủ để đánh giá với dữ liệu ở cấp độ từ (word level). Nếu sử dụng WER (Word Error Rate) sẽ không phù hợp vì mỗi mẫu chỉ chứa một từ duy nhất.
+
+Ngoài CER là metric chính, ta cũng xem xét thêm exact match rate (tỷ lệ dự đoán chính xác hoàn toàn), và accuracy (= 1 - CER) để có cái nhìn tổng quan hơn về hiệu suất mô hình.

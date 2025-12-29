@@ -50,8 +50,18 @@ Mỗi thư mục con chứa các ảnh chữ viết tay và một file \texttt{l
 }
 \end{verbatim}
 
-\subsection{Phân tích dữ liệu (Exploratory Data Analysis)}
-Quá trình phân tích khám phá dữ liệu (EDA) được thực hiện chi tiết trên tập huấn luyện (107,607 mẫu) và tập kiểm tra (2,881 mẫu) nhằm định hướng cho các quyết định tiền xử lý và cấu hình mô hình.
+\subsection{Pipeline}
+Quy trình fine-tuning mô hình DeepSeek-OCR trên bộ dữ liệu UIT-HWDB-word bao gồm các bước chính:
+\begin{enumerate}
+    \item Chuẩn bị dữ liệu: Chuẩn bị bộ dữ liệu UIT-HWDB-word với ảnh và nhãn tương ứng.
+    \item Tiền xử lý dữ liệu: Tiền xử lý ảnh và định dạng dữ liệu theo chuẩn hội thoại.
+    \item Huấn luyện: Huấn luyện mô hình DeepSeek-OCR trên tập huấn luyện.
+    \item Đánh giá: Đánh giá mô hình trên tập kiểm tra sử dụng các metrics như CER, Accuracy và Exact Match.
+\end{enumerate}
+Tuy nhiên, trước khi vào pipeline chính, ta sẽ tiến hành phân tích dữ liệu để hiểu rõ hơn về đặc điểm của bộ dữ liệu và từ đó đưa ra các quyết định tiền xử lý và cấu hình mô hình phù hợp.
+
+\subsection{Phân tích dữ liệu}
+Quá trình phân tích dữ liệu được thực hiện chi tiết trên tập huấn luyện (107,607 mẫu) và tập kiểm tra (2,881 mẫu) nhằm định hướng cho các quyết định tiền xử lý và cấu hình mô hình.
 
 \subsubsection{Đặc điểm hình ảnh}
 Phân tích thống kê kích thước ảnh cho thấy những đặc trưng quan trọng:
@@ -81,13 +91,17 @@ Từ kết quả này, việc lựa chọn kích thước ảnh đầu vào cho 
     \label{fig:label_dist}
 \end{figure}
 
-\subsection{Tiền xử lý dữ liệu (Data Preprocessing)}
-
+\subsection{Tiền xử lý dữ liệu}
+Dựa trên notebook hướng dẫn fine-tuning mô hình DeepSeek-OCR của Unsloth (\cite{unsloth}), ta sẽ thực hiện các bước tiền xử lý dữ liệu, bao gồm chuẩn bị dữ liệu, định dạng hội thoại và xử lý ảnh.
 \subsubsection{Chuẩn bị dữ liệu}
-Quá trình chuẩn bị dữ liệu bao gồm việc đọc các file \texttt{label.json} từ các thư mục con, tải ảnh sử dụng thư viện PIL và chuyển đổi sang định dạng RGB.
+Quá trình chuẩn bị dữ liệu bao gồm:
+\begin{enumerate}
+    \item Đọc các file \texttt{label.json} từ tập dữ liệu
+    \item Tải ảnh và chuyển đổi sang định dạng RGB.
+\end{enumerate}
 
-\subsubsection{Định dạng hội thoại (Conversation Format)}
-Để fine-tune mô hình DeepSeek-OCR (một mô hình Vision-Language Model), dữ liệu được chuyển đổi sang định dạng hội thoại chuẩn:
+\subsubsection{Định dạng hội thoại}
+Để fine-tune mô hình DeepSeek-OCR (một mô hình Vision-Language Model), dữ liệu được chuyển đổi sang định dạng hội thoại (conversation format) chuẩn:
 \begin{verbatim}
 {
     "messages": [
@@ -105,46 +119,67 @@ Quá trình chuẩn bị dữ liệu bao gồm việc đọc các file \texttt{l
 \end{verbatim}
 Trong đó, token \texttt{<image>} đại diện cho vị trí chèn các embedding của ảnh, và câu lệnh "Free OCR." đóng vai trò là prompt hướng dẫn mô hình thực hiện tác vụ nhận dạng ký tự quang học.
 
-\subsubsection{Xử lý ảnh (Image Processing)}
-Trong quá trình huấn luyện, ảnh đầu vào được xử lý thông qua \texttt{DeepSeekOCRDataCollator} với các tham số cấu hình như sau:
+\subsubsection{Xử lý ảnh}
+Trong quá trình huấn luyện, ảnh đầu vào được xử lý thông qua \texttt{DeepSeekOCRDataCollator}. Các tham số chính được thiết lập như sau:
 \begin{itemize}
-    \item \textbf{Kích thước ảnh (Image Size):} 384x384 pixels. Tham số này được lựa chọn dựa trên kết quả EDA cho thấy phần lớn ảnh trong bộ dữ liệu có kích thước nhỏ, do đó kích thước 384x384 là đủ để bao quát chi tiết ảnh mà không gây lãng phí tài nguyên tính toán.
-    \item \textbf{Chế độ cắt (Crop Mode):} Tắt (\texttt{False}). Do kích thước ảnh gốc chủ yếu là nhỏ và phù hợp với kích thước đầu vào (384x384), việc sử dụng cơ chế dynamic cropping (thường dùng cho ảnh độ phân giải cao) là không cần thiết. Việc tắt chế độ này giúp đơn giản hóa quá trình xử lý và tối ưu hóa tốc độ huấn luyện.
-    \item \textbf{Chuẩn hóa (Normalization):} Mean = (0.5, 0.5, 0.5), Std = (0.5, 0.5, 0.5).
+    \item \texttt{crop\_mode=False}: Tắt chế độ cắt ảnh động (dynamic cropping). DeepSeek-OCR mặc định hỗ trợ cắt ảnh lớn thành nhiều mảnh để xử lý chi tiết. Tuy nhiên, với bộ dữ liệu UIT-HWDB-word gồm các ảnh từ đơn lẻ kích thước nhỏ, việc này không cần thiết. Thiết lập \texttt{False} giúp mô hình tập trung vào toàn cục (global view) và giảm chi phí tính toán.
+    \item \texttt{base\_size=384}: Kích thước khung hình cơ sở. Ảnh đầu vào được thay đổi kích thước (resize) hoặc thêm viền (padding) để đạt kích thước $384 \times 384$ pixels. Giá trị 384 được chọn dựa trên phân tích phân bố kích thước ảnh, đảm bảo bao quát được phần lớn các mẫu dữ liệu (chiều cao trung bình $\sim$98px) mà không cần co nhỏ làm mất thông tin chi tiết.
+    \item \texttt{image\_size=384}: Kích thước chuẩn hóa đầu vào cho Vision Encoder. Trong chế độ không cắt ảnh, tham số này đồng bộ với \texttt{base\_size} để định hình tensor đầu vào cho mạng nơ-ron.
 \end{itemize}
-Lưu ý rằng trong quá trình suy diễn (inference), kích thước ảnh và chế độ crop có thể được điều chỉnh (ví dụ: 1024x1024 và bật crop mode) để đạt độ chính xác cao hơn.
 
-\subsection{Kiến trúc mô hình và Fine-tuning}
+\subsection{Cấu hình huấn luyện}
 
 \subsubsection{Mô hình cơ sở}
-Dự án sử dụng mô hình \textbf{DeepSeek-OCR}, được tải và tối ưu hóa thông qua thư viện \textbf{Unsloth} (\texttt{FastVisionModel}). Unsloth giúp tăng tốc độ huấn luyện và giảm bộ nhớ tiêu thụ thông qua các kỹ thuật tối ưu hóa kernel và lượng tử hóa.
+Ta sử dụng mô hình DeepSeek-OCR thông qua thư viện Unsloth (\texttt{FastVisionModel}). Mô hình được huấn luyện ở độ chính xác 16-bit (BF16/FP16) với thiết lập \texttt{load\_in\_4bit = False}.
 
-\subsubsection{Chiến lược Fine-tuning: LoRA}
-Để tinh chỉnh mô hình trên tập dữ liệu tiếng Việt với tài nguyên hạn chế, kỹ thuật \textbf{LoRA (Low-Rank Adaptation)} được áp dụng. Cấu hình LoRA cụ thể như sau:
-\begin{itemize}
-    \item \textbf{Rank (r):} 16
-    \item \textbf{Alpha:} 16
-    \item \textbf{Dropout:} 0
-    \item \textbf{Target Modules:} Áp dụng lên tất cả các lớp linear projection trong mô hình attention: \texttt{q\_proj, k\_proj, v\_proj, o\_proj, gate\_proj, up\_proj, down\_proj}.
-\end{itemize}
+\subsubsection{LoRA}
+Vì tài nguyên có hạn, ta sử dụng kỹ thuật LoRA (Low-Rank Adaptation). Ta sẽ chỉ tinh chỉnh các ma trận hạng thấp (adapters) được thêm vào các lớp attention và feed-forward, trong khi đóng băng toàn bộ trọng số của mô hình gốc. Chi tiết cấu hình được trình bày trong Bảng \ref{tab:lora_config}.
+\begin{table}[H]
+    \centering
+    \caption{Cấu hình LoRA}
+    \label{tab:lora_config}
+    \begin{tabular}{|l|p{5cm}|}
+        \hline
+        \textbf{Tham số} & \textbf{Giá trị}                                                              \\
+        \hline
+        Rank (r)         & 16                                                                            \\
+        \hline
+        Alpha            & 16                                                                            \\
+        \hline
+        Dropout          & 0                                                                             \\
+        \hline
+        Target Modules   & \texttt{q\_proj, k\_proj, v\_proj, o\_proj, gate\_proj, up\_proj, down\_proj} \\
+        \hline
+    \end{tabular}
+\end{table}
 
-\subsubsection{Tham số huấn luyện (Hyperparameters)}
-Quá trình huấn luyện được thực hiện với các tham số chính:
-\begin{itemize}
-    \item \textbf{Số epochs:} 2
-    \item \textbf{Batch size:} 32 (per device)
-    \item \textbf{Gradient Accumulation Steps:} 2
-    \item \textbf{Learning Rate:} 1e-4
-    \item \textbf{Optimizer:} AdamW 8-bit (giúp tiết kiệm bộ nhớ VRAM)
-    \item \textbf{Scheduler:} Linear decay với 5 bước warmup
-    \item \textbf{Độ chính xác:} BF16 (nếu phần cứng hỗ trợ) hoặc FP16
-\end{itemize}
+\subsubsection{Hyperparameter}
+Quá trình fine-tuning được thực hiện với các hyperparameter được liệt kê trong Bảng \ref{tab:hyperparameters}.
 
-\subsection{Độ đo đánh giá (Evaluation Metrics)}
-Mô hình được đánh giá dựa trên các độ đo phổ biến trong bài toán OCR:
-\begin{itemize}
-    \item \textbf{CER (Character Error Rate):} Tỷ lệ lỗi ký tự, đo lường khoảng cách chỉnh sửa (Levenshtein distance) giữa chuỗi dự đoán và nhãn thực tế, chuẩn hóa theo độ dài nhãn.
-    \item \textbf{Accuracy:} Được tính toán dựa trên CER (1 - CER) hoặc tỷ lệ khớp chính xác (Exact Match) tùy ngữ cảnh phân tích.
-    \item \textbf{Exact Match:} Tỷ lệ số mẫu dự đoán hoàn toàn chính xác so với nhãn gốc.
-\end{itemize}
+\begin{table}[H]
+    \centering
+    \caption{Hyperparameters}
+    \label{tab:hyperparameters}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Tham số}            & \textbf{Giá trị}              \\
+        \hline
+        Số epochs                   & 2                             \\
+        \hline
+        Batch size                  & 32 (per device)               \\
+        \hline
+        Gradient Accumulation Steps & 2                             \\
+        \hline
+        Learning Rate               & 1e-4                          \\
+        \hline
+        Optimizer                   & AdamW 8-bit                   \\
+        \hline
+        Scheduler                   & Linear decay (5 warmup steps) \\
+        \hline
+        Độ chính xác                & BF16 hoặc FP16                \\
+        \hline
+    \end{tabular}
+\end{table}
 
+\subsection{Môi trường huấn luyện}
+Quá trình fine-tuning được tiến hành trên nền tảng \href{https://www.kaggle.com/}{Kaggle} với cấu hình phần cứng bao gồm hai GPU NVIDIA T4 và 16\,GB bộ nhớ RAM.

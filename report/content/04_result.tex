@@ -1,0 +1,73 @@
+\section{Kết quả}
+\subsection{Quá trình huấn luyện}
+Training loss trong quá trình fine-tuning được thể hiện trong hình \ref{fig:train_loss}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/train_loss.png}
+    \caption{Training Loss trong quá trình fine-tuning DeepSeek-OCR}
+    \label{fig:train_loss}
+\end{figure}
+
+Ta có thể thấy training loss giảm dần qua các epoch (có 3 epochs). Loss ban đầu là 1.1172, sau 3 epochs giảm xuống còn 0.1101, tương ứng với mức giảm 90.15\%.
+
+Điều này cho thấy mô hình đã học tốt hơn từ dữ liệu huấn luyện trong quá trình fine-tuning. Để trực quan hơn, ta sẽ đánh giá mô hình trên tập kiểm thử và so sánh với mô hình gốc chưa được fine-tuning.
+
+\subsection{Phân tích định lượng}
+Kết quả sau khi đánh giá mô hình trên tập kiểm thử gồm 2,881 mẫu được tóm tắt trong bảng \ref{tab:model_comparison}.
+\begin{table}[H]
+    \centering
+    \caption{So sánh hiệu năng giữa mô hình Baseline và Finetuned}
+    \label{tab:model_comparison}
+    \begin{tabular}{l c c c}
+        \hline
+        \textbf{Mô hình} & \textbf{Overall CER} & \textbf{Accuracy} & \textbf{Exact Match}    \\
+        \hline
+        Baseline         & 2.2673               & -1.2673           & 63 (2.19\%)             \\
+        Finetuned        & \textbf{0.1075}      & \textbf{0.8925}   & \textbf{2296 (79.69\%)} \\
+        \hline
+    \end{tabular}
+\end{table}
+Ta có thể thấy rằng mô hình sau khi fine-tuning có sự cải thiện đáng kể về các chỉ số đánh giá so với mô hình gốc (baseline). Overall CER giảm đáng kể từ 2.2673 xuống còn 0.1075, tương ứng với mức giảm 95.26\%. Các chỉ số Accuracy và Exact Match cũng được cải thiện.
+
+\subsection{Phân tích định tính}
+\subsubsection{Cải thiện}
+Để minh họa cho sự cải thiện của mô hình sau khi fine-tuning, ta sẽ xem xét các mẫu mà mô hình fine-tuned dự đoán đúng trong khi mô hình baseline dự đoán sai.
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/comparison_1.png}
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/comparison_2.png}
+    \end{minipage}
+    \caption{Ví dụ về các mẫu mà mô hình fine-tuned dự đoán đúng trong khi mô hình baseline dự đoán sai}
+    \label{fig:improved_samples}
+\end{figure}
+
+Đối với mô hình Baseline, do chưa được huấn luyện (zero-shot) trên bộ dữ liệu mới, mô hình chưa nắm bắt được các đặc trưng của chữ viết tay tiếng Việt. Điều này dẫn đến các dự đoán sai lệch lớn so với nhãn thực tế.
+
+Cụ thể, các lỗi điển hình bao gồm việc sinh ra các chuỗi ký tự nhiễu hoặc định dạng sai. Ví dụ: từ "khắc" bị dự đoán thành \verb|\[ \epsilon_{ccc} \]|, từ "rồi" bị dự đoán thành \verb|\[r o i\]|.
+
+Sau khi fine-tuning, mô hình đã học được các đặc trưng này và đưa ra các dự đoán chính xác hơn. Hai từ "khắc" và "rồi" đều được mô hình fine-tuned dự đoán đúng, khắc phục hoàn toàn các lỗi trên.
+
+\subsubsection{Trường hợp khó}
+\label{sec:hard_cases}
+Tuy nhiên, vẫn còn một số trường hợp mà model fine-tuned gặp khó khăn khi dự đoán những mẫu khó, như ví dụ trong hình \ref{fig:hard_cases}.
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/hard_1.png}
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{img/hard_2.png}
+    \end{minipage}
+    \caption{Ví dụ về các mẫu mà mô hình fine-tuned gặp khó khăn trong việc dự đoán chính xác}
+    \label{fig:hard_cases}
+\end{figure}
+
+

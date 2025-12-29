@@ -1,0 +1,10 @@
+{
+  "model_type": "finetuned",
+  "overall_cer": 0.1074642126789366,
+  "total_samples": 2881,
+  "exact_matches": 2296,
+  "accuracy": 0.8925357873210634,
+  "mean_cer": 0.11619807937058892,
+  "median_cer": 0.0,
+  "std_cer": 0.2695334168895878
+}

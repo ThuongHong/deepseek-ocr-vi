@@ -1,0 +1,10 @@
+{
+  "model_type": "baseline",
+  "overall_cer": 2.267280163599182,
+  "total_samples": 2881,
+  "exact_matches": 63,
+  "accuracy": -1.2672801635991822,
+  "mean_cer": 3.109337035751475,
+  "median_cer": 1.0,
+  "std_cer": 34.39088909729285
+}
